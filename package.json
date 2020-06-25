@@ -27,7 +27,9 @@
     },
     "private": true,
     "dependencies": {
-        "dayjs": "^1.8.28"
+        "@types/mathjs": "^6.0.5",
+        "dayjs": "^1.8.28",
+        "mathjs": "^7.0.2"
     },
     "devDependencies": {
         "@nrwl/eslint-plugin-nx": "^9.4.5",

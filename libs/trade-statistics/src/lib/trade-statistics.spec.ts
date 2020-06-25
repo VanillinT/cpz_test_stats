@@ -1,8 +1,9 @@
 import MockDate from "mockdate";
 import { dayjs } from "@cpz-test-stats/dayjs";
-import { calcStatistics } from "./trade-statistics";
+import { calcStatisticsCumulatively } from "./trade-statistics";
 import { positions } from "./testData/positionsForStats";
 import { result as correctResult } from "./testData/correctResult";
+import { roundEquityValues, roundStatisticsValues } from "../helpers";
 
 describe("Test 'tradeStatistics' utils", () => {
     beforeAll(() => {
@@ -11,11 +12,22 @@ describe("Test 'tradeStatistics' utils", () => {
     afterAll(() => {
         MockDate.reset();
     });
-    describe("Test 'calcStatistics'", () => {
-        it("Should calc stats", () => {
-            const result = calcStatistics(positions);
+
+    describe("Test 'calcStatisticsCumulatively'", () => {
+        it("Should cumulatively calculate statistics", () => {
+            const result = positions.reduce((acc, val) => calcStatisticsCumulatively(acc, val), {
+                statistics: null,
+                equity: null
+            });
+
+            const roundedResult = {
+                statistics: roundStatisticsValues(result.statistics),
+                equity: roundEquityValues(result.equity)
+            };
+
             correctResult.statistics.lastUpdatedAt = dayjs.utc().toISOString();
-            expect(result).toStrictEqual(correctResult);
+
+            expect(roundedResult).toStrictEqual(correctResult);
         });
     });
 });
