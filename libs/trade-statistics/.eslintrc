@@ -1,1 +1,7 @@
-{ "extends": "../../.eslintrc", "rules": {}, "ignorePatterns": ["!**/*"] }
+{ 
+    "extends": "../../.eslintrc", 
+    "rules": { 
+        "env": { "node": true } // Let eslint know we're working in node to allow key wolrds e.g. 'module'
+    }, 
+    "ignorePatterns": ["!**/*"] 
+}
