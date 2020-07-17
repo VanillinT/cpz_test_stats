@@ -43,7 +43,7 @@ export interface RobotStats {
     maxConsecWins?: RobotStatVals<number>; // HERE WAS TYPO
     maxConsecLosses?: RobotStatVals<number>;
     currentWinSequence?: RobotStatVals<number>;
-    currentLooseSequence?: RobotStatVals<number>;
+    currentLossSequence?: RobotStatVals<number>; // 'Loose' was a poor choice
     maxDrawdown?: RobotStatVals<number>;
     maxDrawdownDate?: RobotStatVals<string>;
     profitFactor?: RobotStatVals<number>;

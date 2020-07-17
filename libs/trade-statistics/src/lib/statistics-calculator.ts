@@ -1,16 +1,29 @@
-import { PositionDataForStats, PositionDirection, RobotStats, RobotStatVals } from "@cpz-test-stats/trade-statistics";
+import { PositionDataForStats, PositionDirection, RobotStats, RobotStatVals, PerformanceVals } from "@cpz-test-stats/trade-statistics";
 import { dayjs } from "../../../dayjs/src/lib/dayjs";
 import { round } from "mathjs";
 
+// Classes to eliminate manual object construction
+// TODO: implement the 2 classes below elsewhere
 class RobotNumberVals implements RobotStatVals<number> {
-    all = 0;
-    long = 0;
-    short = 0;
+    constructor(public all?:number, public long?:number, public short?:number) {
+        this.all = all || 0;
+        this.long = long || 0;
+        this.short = short || 0;
+    }
+}
+
+// Gotta have a class for string values as well as for numeric
+class RobotStringVals implements RobotStatVals<string> {
+    constructor(public all?:string, public long?:string, public short?:string) {
+        this.all = all || "";
+        this.long = long || "";
+        this.short = short || "";
+    }
 }
 
 class RobotDefaultStats implements RobotStats {
     lastUpdatedAt?: string;
-    performance: { x: number; y: number }[] = [];
+    performance: PerformanceVals = []; // Use the type we declaired instead of a look-alike object
     tradesCount = new RobotNumberVals();
     tradesWinning = new RobotNumberVals();
     tradesLosing = new RobotNumberVals();
@@ -29,23 +42,23 @@ class RobotDefaultStats implements RobotStats {
     maxConsecWins = new RobotNumberVals();
     maxConsecLosses = new RobotNumberVals();
     currentWinSequence = new RobotNumberVals();
-    currentLooseSequence = new RobotNumberVals();
+    currentLossSequence = new RobotNumberVals();
     maxDrawdown = new RobotNumberVals();
-    maxDrawdownDate = { all: "", long: "", short: "" };
+    maxDrawdownDate = new RobotStringVals();
     profitFactor = new RobotNumberVals();
     recoveryFactor = new RobotNumberVals();
     payoffRatio = new RobotNumberVals();
 }
 
 export class StatisticsCalculator {
-    private calculationResults: RobotStats = {};
+    private calculationResults: RobotStats = {}; // manual object definiton
     private readonly dir: PositionDirection;
 
     public constructor(
-        private statistics: RobotStats = new RobotDefaultStats(),
+        private statistics: RobotStats, // = new RobotDefaultStats() 
         private newPosition: PositionDataForStats
     ) {
-        this.statistics = statistics || new RobotDefaultStats();
+        this.statistics = statistics || new RobotDefaultStats(); // line was repeating parameter default
         this.dir = newPosition.direction;
     }
 
@@ -78,66 +91,65 @@ export class StatisticsCalculator {
         return this.calculationResults;
     }
 
+    // should be called 'incrementTrades[...]'
     private calculateTradesAll(): void {
         const result = { ...this.statistics.tradesCount };
 
+        this.calculationResults.tradesCount = result;
+        
         result.all++;
         result[this.dir]++;
-
-        this.calculationResults.tradesCount = result;
     }
 
     private calculateTradesWinning(): void {
         const result = { ...this.statistics.tradesWinning };
 
-        if (this.newPosition.profit <= 0) {
-            this.calculationResults.tradesWinning = result;
-            return;
-        }
-
-        result.all++;
-        result[this.dir]++;
-
         this.calculationResults.tradesWinning = result;
-    }
 
+        // simplified condition
+        if (this.newPosition.profit > 0) {
+            result.all++;
+            result[this.dir]++;
+        }
+    }
+    
+    // same as above
     private calculateTradesLosing(): void {
         const result = { ...this.statistics.tradesLosing };
 
-        if (this.newPosition.profit >= 0) {
-            this.calculationResults.tradesLosing = result;
-            return;
+        this.calculationResults.tradesLosing = result; 
+
+        if (this.newPosition.profit < 0) {
+            result.all++;
+            result[this.dir]++;
         }
-
-        result.all++;
-        result[this.dir]++;
-
-        this.calculationResults.tradesLosing = result;
     }
 
     private calculateWinRate(): void {
         const result = { ...this.statistics.winRate };
 
+        this.calculationResults.winRate = result;
+
         result.all = (this.calculationResults.tradesWinning.all / this.calculationResults.tradesCount.all) * 100;
         result[this.dir] =
             (this.calculationResults.tradesWinning[this.dir] / this.calculationResults.tradesCount[this.dir]) * 100;
-
-        this.calculationResults.winRate = result;
     }
 
     private calculateLossRate(): void {
         const result = { ...this.statistics.lossRate };
 
+        this.calculationResults.lossRate = result;
+
         result.all = (this.calculationResults.tradesLosing.all / this.calculationResults.tradesCount.all) * 100;
         result[this.dir] =
             (this.calculationResults.tradesLosing[this.dir] / this.calculationResults.tradesCount[this.dir]) * 100;
-
-        this.calculationResults.lossRate = result;
     }
 
     private calculateAvgBarsHeld(): void {
         const result = { ...this.statistics.avgBarsHeld };
 
+        this.calculationResults.avgBarsHeld = result;
+        
         result.all =
             (this.statistics.avgBarsHeld.all * this.statistics.tradesCount.all + this.newPosition.barsHeld) /
             this.calculationResults.tradesCount.all;
@@ -145,146 +157,128 @@ export class StatisticsCalculator {
             (this.statistics.avgBarsHeld[this.dir] * this.statistics.tradesCount[this.dir] +
                 this.newPosition.barsHeld) /
             this.calculationResults.tradesCount[this.dir];
-
-        this.calculationResults.avgBarsHeld = result;
     }
 
     private calculateAvgBarsHeldWinning(): void {
         const result = { ...this.statistics.avgBarsHeldWinning };
 
-        if (this.newPosition.profit <= 0) {
-            this.calculationResults.avgBarsHeldWinning = result;
-            return;
-        }
-
-        result.all =
-            (this.statistics.avgBarsHeldWinning.all * this.statistics.tradesWinning.all + this.newPosition.barsHeld) /
-            this.calculationResults.tradesWinning.all;
-        result[this.dir] =
-            (this.statistics.avgBarsHeldWinning[this.dir] * this.statistics.tradesWinning[this.dir] +
-                this.newPosition.barsHeld) /
-            this.calculationResults.tradesWinning[this.dir];
-
         this.calculationResults.avgBarsHeldWinning = result;
+
+        if (this.newPosition.profit > 0) {
+            result.all =
+                (this.statistics.avgBarsHeldWinning.all * this.statistics.tradesWinning.all + this.newPosition.barsHeld) /
+                this.calculationResults.tradesWinning.all;
+            result[this.dir] =
+                (this.statistics.avgBarsHeldWinning[this.dir] * this.statistics.tradesWinning[this.dir] +
+                    this.newPosition.barsHeld) /
+                this.calculationResults.tradesWinning[this.dir];
+        }
     }
 
     private calculateAvgBarsHeldLosing(): void {
         const result = { ...this.statistics.avgBarsHeldLosing };
 
-        if (this.newPosition.profit >= 0) {
-            this.calculationResults.avgBarsHeldLosing = result;
-            return;
+        this.calculationResults.avgBarsHeldLosing = result;
+
+        if (this.newPosition.profit < 0) {
+            result.all =
+                (this.statistics.avgBarsHeldLosing.all * this.statistics.tradesLosing.all + this.newPosition.barsHeld) /
+                this.calculationResults.tradesLosing.all;
+            result[this.dir] =
+                (this.statistics.avgBarsHeldLosing[this.dir] * this.statistics.tradesLosing[this.dir] +
+                    this.newPosition.barsHeld) /
+                this.calculationResults.tradesLosing[this.dir];
         }
 
-        result.all =
-            (this.statistics.avgBarsHeldLosing.all * this.statistics.tradesLosing.all + this.newPosition.barsHeld) /
-            this.calculationResults.tradesLosing.all;
-        result[this.dir] =
-            (this.statistics.avgBarsHeldLosing[this.dir] * this.statistics.tradesLosing[this.dir] +
-                this.newPosition.barsHeld) /
-            this.calculationResults.tradesLosing[this.dir];
 
-        this.calculationResults.avgBarsHeldLosing = result;
     }
 
     private calculateNetProfit(): void {
         const result = { ...this.statistics.netProfit };
 
+        this.calculationResults.netProfit = result;
+
         result.all = this.statistics.netProfit.all + this.newPosition.profit;
         result[this.dir] = this.statistics.netProfit[this.dir] + this.newPosition.profit;
-
-        this.calculationResults.netProfit = result;
     }
 
     private calculateLocalMax(): void {
         const result = { ...this.statistics.localMax };
 
+        this.calculationResults.localMax = result;
+
         result.all = Math.max(this.statistics.localMax.all, this.calculationResults.netProfit.all);
         result[this.dir] = Math.max(this.statistics.localMax[this.dir], this.calculationResults.netProfit[this.dir]);
-
-        this.calculationResults.localMax = result;
     }
 
     private calculateAvgNetProfit(): void {
         const result = { ...this.statistics.avgNetProfit };
 
+        this.calculationResults.avgNetProfit = result;
+    
         result.all = this.calculationResults.netProfit.all / this.calculationResults.tradesCount.all;
         result[this.dir] = this.calculationResults.netProfit[this.dir] / this.calculationResults.tradesCount[this.dir];
-
-        this.calculationResults.avgNetProfit = result;
     }
 
     private calculateGrossProfit(): void {
         const result = { ...this.statistics.grossProfit };
 
-        if (this.newPosition.profit <= 0) {
-            this.calculationResults.grossProfit = result;
-            return;
-        }
-
-        result.all = this.statistics.grossProfit.all + this.newPosition.profit;
-        result[this.dir] = this.statistics.grossProfit[this.dir] + this.newPosition.profit;
-
         this.calculationResults.grossProfit = result;
+
+        if (this.newPosition.profit > 0) {
+            result.all = this.statistics.grossProfit.all + this.newPosition.profit;
+            result[this.dir] = this.statistics.grossProfit[this.dir] + this.newPosition.profit;
+        }
     }
 
     private calculateGrossLoss(): void {
         const result = { ...this.statistics.grossLoss };
 
-        if (this.newPosition.profit >= 0) {
-            this.calculationResults.grossLoss = result;
-            return;
-        }
-
-        result.all = this.statistics.grossLoss.all + this.newPosition.profit;
-        result[this.dir] = this.statistics.grossLoss[this.dir] + this.newPosition.profit;
-
         this.calculationResults.grossLoss = result;
+
+        if (this.newPosition.profit < 0) {
+            result.all = this.statistics.grossLoss.all + this.newPosition.profit;
+            result[this.dir] = this.statistics.grossLoss[this.dir] + this.newPosition.profit;
+        }
     }
 
     private calculateAvgProfit(): void {
         const result = { ...this.statistics.avgProfit };
 
-        if (this.newPosition.profit <= 0) {
-            this.calculationResults.avgProfit = result;
-            return;
-        }
-
-        result.all = this.calculationResults.grossProfit.all / this.calculationResults.tradesWinning.all;
-        result[this.dir] =
-            this.calculationResults.grossProfit[this.dir] / this.calculationResults.tradesWinning[this.dir];
-
         this.calculationResults.avgProfit = result;
+
+        if (this.newPosition.profit > 0) {
+            result.all = this.calculationResults.grossProfit.all / this.calculationResults.tradesWinning.all;
+            result[this.dir] =
+                this.calculationResults.grossProfit[this.dir] / this.calculationResults.tradesWinning[this.dir];
+        }
     }
 
     private calculateAvgLoss(): void {
         const result = { ...this.statistics.avgLoss };
 
-        if (this.newPosition.profit >= 0) {
-            this.calculationResults.avgLoss = result;
-            return;
-        }
-
-        result.all = this.calculationResults.grossLoss.all / this.calculationResults.tradesLosing.all;
-        result[this.dir] = this.calculationResults.grossLoss[this.dir] / this.calculationResults.tradesLosing[this.dir];
-
         this.calculationResults.avgLoss = result;
+
+        if (this.newPosition.profit < 0) {
+            result.all = this.calculationResults.grossLoss.all / this.calculationResults.tradesLosing.all;
+            result[this.dir] = this.calculationResults.grossLoss[this.dir] / this.calculationResults.tradesLosing[this.dir];
+        }
     }
 
     private calculateProfitFactor(): void {
-        this.calculationResults.profitFactor = {
-            all: Math.abs(this.calculationResults.grossProfit.all / this.calculationResults.grossLoss.all),
-            long: Math.abs(this.calculationResults.grossProfit.long / this.calculationResults.grossLoss.long),
-            short: Math.abs(this.calculationResults.grossProfit.short / this.calculationResults.grossLoss.short)
-        };
+        this.calculationResults.profitFactor = new RobotNumberVals(
+            Math.abs(this.calculationResults.grossProfit.all / this.calculationResults.grossLoss.all),
+            Math.abs(this.calculationResults.grossProfit.long / this.calculationResults.grossLoss.long),
+            Math.abs(this.calculationResults.grossProfit.short / this.calculationResults.grossLoss.short)
+        );
     }
 
     private calculatePayoffRatio(): void {
-        this.calculationResults.payoffRatio = {
-            all: Math.abs(this.calculationResults.avgProfit.all / this.calculationResults.avgLoss.all),
-            long: Math.abs(this.calculationResults.avgProfit.long / this.calculationResults.avgLoss.long),
-            short: Math.abs(this.calculationResults.avgProfit.short / this.calculationResults.avgLoss.short)
-        };
+        this.calculationResults.payoffRatio = new RobotNumberVals(
+            Math.abs(this.calculationResults.avgProfit.all / this.calculationResults.avgLoss.all),
+            Math.abs(this.calculationResults.avgProfit.long / this.calculationResults.avgLoss.long),
+            Math.abs(this.calculationResults.avgProfit.short / this.calculationResults.avgLoss.short)
+        );
     }
 
     private calculateMaxConsecWins(): void {
@@ -317,30 +311,30 @@ export class StatisticsCalculator {
     }
 
     private calculateMaxConsecLosses(): void {
-        let directionSequence = this.statistics.currentLooseSequence[this.dir];
+        let directionSequence = this.statistics.currentLossSequence[this.dir];
 
         if (this.newPosition.profit >= 0) {
             if (directionSequence > 0) directionSequence = 0;
 
             this.calculationResults.maxConsecLosses = { ...this.statistics.maxConsecLosses };
-            this.calculationResults.currentLooseSequence = {
-                ...this.statistics.currentLooseSequence,
+            this.calculationResults.currentLossSequence = {
+                ...this.statistics.currentLossSequence,
                 all: 0,
                 [this.dir]: directionSequence
             };
         } else {
             this.calculationResults.maxConsecLosses = {
                 ...this.statistics.maxConsecLosses,
-                all: Math.max(this.statistics.maxConsecLosses.all, this.statistics.currentLooseSequence.all + 1),
+                all: Math.max(this.statistics.maxConsecLosses.all, this.statistics.currentLossSequence.all + 1),
                 [this.dir]: Math.max(
                     this.statistics.maxConsecLosses[this.dir],
-                    this.statistics.currentLooseSequence[this.dir] + 1
+                    this.statistics.currentLossSequence[this.dir] + 1
                 )
             };
-            this.calculationResults.currentLooseSequence = {
-                ...this.statistics.currentLooseSequence,
-                all: this.statistics.currentLooseSequence.all + 1,
-                [this.dir]: this.statistics.currentLooseSequence[this.dir] + 1
+            this.calculationResults.currentLossSequence = {
+                ...this.statistics.currentLossSequence,
+                all: this.statistics.currentLossSequence.all + 1,
+                [this.dir]: this.statistics.currentLossSequence[this.dir] + 1
             };
         }
     }
@@ -400,10 +394,10 @@ export class StatisticsCalculator {
     private calculateRecoveryFactor(): void {
         const result = { ...this.statistics.recoveryFactor };
 
+        this.calculationResults.recoveryFactor = result;
+
         result.all = (this.calculationResults.netProfit.all / this.calculationResults.maxDrawdown.all) * -1;
         result[this.dir] =
             (this.calculationResults.netProfit[this.dir] / this.calculationResults.maxDrawdown[this.dir]) * -1;
-
-        this.calculationResults.recoveryFactor = result;
     }
 }

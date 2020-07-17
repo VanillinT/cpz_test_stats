@@ -13,7 +13,7 @@ export const result = {
         avgNetProfit: { all: 5.16, long: 6.04, short: 4.06 },
         grossProfit: { all: 4825.84, long: 2738.58, short: 2087.25 },
         avgProfit: { all: 35.23, long: 36.03, short: 34.22 },
-        currentLooseSequence: { all: 1, long: 3, short: 1 },
+        currentLossSequence: { all: 1, long: 3, short: 1 },
         currentWinSequence: { all: 0, long: 0, short: 0 },
         grossLoss: { all: -3186.1, long: -1675.91, short: -1510.19 },
         avgLoss: { all: -17.7, long: -16.93, short: -18.64 },
