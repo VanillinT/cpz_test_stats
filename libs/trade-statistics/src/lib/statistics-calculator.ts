@@ -5,20 +5,12 @@ import { round } from "mathjs";
 // Classes to eliminate manual object construction
 // TODO: implement the 2 classes below elsewhere
 class RobotNumberVals implements RobotStatVals<number> {
-    constructor(public all?:number, public long?:number, public short?:number) {
-        this.all = all || 0;
-        this.long = long || 0;
-        this.short = short || 0;
-    }
+    constructor(public all:number = 0, public long:number = 0, public short:number = 0) {}
 }
 
 // Gotta have a class for string values as well as for numeric
 class RobotStringVals implements RobotStatVals<string> {
-    constructor(public all?:string, public long?:string, public short?:string) {
-        this.all = all || "";
-        this.long = long || "";
-        this.short = short || "";
-    }
+    constructor(public all:string = "", public long:string = "", public short:string = "") {}
 }
 
 class RobotDefaultStats implements RobotStats {
