@@ -1,18 +1,18 @@
 import { RobotEquity, RobotStats, RobotStatVals } from "./lib/trade-statistics";
 import { round } from "mathjs";
 
-// Passing a parameter to function is a bad practice
+// Passing a parameter to function is a bad practice (corrected)
 export function roundStatisticsValues(statistics: RobotStats): RobotStats {
     const result = { ...statistics };
 
-    result.tradesCount = roundRobotStatVals(result.tradesCount);
+    result.tradesCount = roundRobotStatVals(result.tradesCount); // adding a non-decimal type is adviced for such values
     result.tradesWinning = roundRobotStatVals(result.tradesWinning);
     result.tradesLosing = roundRobotStatVals(result.tradesLosing);
     result.winRate = roundRobotStatVals(result.winRate);
-    result.avgBarsHeld = roundRobotStatVals(result.avgBarsHeld);
     result.lossRate = roundRobotStatVals(result.lossRate);
-    result.avgBarsHeldWinning = roundRobotStatVals(result.avgBarsHeldWinning);
-    result.avgBarsHeldLosing = roundRobotStatVals(result.avgBarsHeldLosing);
+    result.avgBarsHeld = roundRobotStatVals(result.avgBarsHeld, 2); // rounding to 0 decimal points resulted in decent error
+    result.avgBarsHeldWinning = roundRobotStatVals(result.avgBarsHeldWinning, 2);
+    result.avgBarsHeldLosing = roundRobotStatVals(result.avgBarsHeldLosing, 2);
     result.netProfit = roundRobotStatVals(result.netProfit, 2);
     result.avgNetProfit = roundRobotStatVals(result.avgNetProfit, 2);
     result.grossProfit = roundRobotStatVals(result.grossProfit, 2);

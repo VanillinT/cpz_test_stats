@@ -42,7 +42,7 @@ class RobotDefaultStats implements RobotStats {
     payoffRatio = new RobotNumberVals();
 }
 
-export class StatisticsCalculator {
+export default class StatisticsCalculator {
     private calculationResults: RobotStats = {}; // manual object definiton
     private readonly dir: PositionDirection;
 

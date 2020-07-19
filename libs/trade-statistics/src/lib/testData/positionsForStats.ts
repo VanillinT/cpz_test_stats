@@ -2229,4 +2229,4 @@ const positions: PositionDataForStats[] = [
     }
 ];
 
-export { positions };
+export default positions;

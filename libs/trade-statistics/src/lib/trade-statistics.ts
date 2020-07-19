@@ -1,5 +1,6 @@
-import { StatisticsCalculator } from "./statistics-calculator";
-import { EquityCalculator } from "./equity-calculator";
+import StatisticsCalculator from "./statistics-calculator";
+import EquityCalculator from "./equity-calculator";
+import { roundEquityValues, roundStatisticsValues } from "../helpers";
 
 export const enum PositionDirection {
     long = "long",
@@ -28,8 +29,8 @@ export interface RobotStats {
     tradesCount?: RobotStatVals<number>;
     tradesWinning?: RobotStatVals<number>;
     tradesLosing?: RobotStatVals<number>;
-    winRate?: RobotStatVals<number>;
-    lossRate?: RobotStatVals<number>;
+    winRate?: RobotStatVals<number>; //should point out that the value is percentage
+    lossRate?: RobotStatVals<number>; //should point out that the value is percentage
     avgBarsHeld?: RobotStatVals<number>;
     avgBarsHeldWinning?: RobotStatVals<number>;
     avgBarsHeldLosing?: RobotStatVals<number>;
@@ -65,6 +66,7 @@ export interface CommonStats {
     equity: RobotEquity;
 }
 
+// It is now expected that every value is rounded after each cumulative calculatuion
 export function calcStatisticsCumulatively(
     previousPositionsStatistics: CommonStats,
     newPosition: PositionDataForStats
@@ -76,5 +78,8 @@ export function calcStatisticsCumulatively(
     const statistics = new StatisticsCalculator(prevStats, newPosition).calculateStatistics();
     const equity = new EquityCalculator(statistics, newPosition).calculateEquity();
 
-    return { statistics, equity };
+    return {
+        statistics: roundStatisticsValues(statistics),
+        equity: roundEquityValues(equity)
+    }
 }

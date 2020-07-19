@@ -1,7 +1,7 @@
 import { PerformanceVals, PositionDataForStats, RobotEquity, RobotStats } from "@cpz-test-stats/trade-statistics";
 import { chunkArray } from "@cpz-test-stats/helpers";
 
-export class EquityCalculator {
+export default class EquityCalculator {
     public constructor(private statistics: RobotStats, private newPosition: PositionDataForStats) {}
 
     public calculateEquity(): RobotEquity {
