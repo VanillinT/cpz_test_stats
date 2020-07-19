@@ -1,5 +1,5 @@
 import { PositionDataForStats, PositionDirection, RobotStats, RobotStatVals, PerformanceVals } from "@cpz-test-stats/trade-statistics";
-import { dayjs } from "../../../dayjs/src/lib/dayjs";
+import { dayjs } from "@cpz-test-stats/dayjs";
 import { round } from "mathjs";
 
 // Classes to eliminate manual object construction
@@ -78,7 +78,7 @@ export default class StatisticsCalculator {
         this.calculateMaxDrawdown();
         this.calculatePerformance();
         this.calculateRecoveryFactor();
-        this.calculationResults.lastUpdatedAt = dayjs.utc().toISOString();
+        this.updateLastUpdated();
 
         return this.calculationResults;
     }
@@ -391,5 +391,9 @@ export default class StatisticsCalculator {
         result.all = (this.calculationResults.netProfit.all / this.calculationResults.maxDrawdown.all) * -1;
         result[this.dir] =
             (this.calculationResults.netProfit[this.dir] / this.calculationResults.maxDrawdown[this.dir]) * -1;
+    }
+
+    private updateLastUpdated(): void {
+        this.calculationResults.lastUpdatedAt = dayjs.utc().toISOString();
     }
 }

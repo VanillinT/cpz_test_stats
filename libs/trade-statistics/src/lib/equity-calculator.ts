@@ -2,7 +2,7 @@ import { PerformanceVals, PositionDataForStats, RobotEquity, RobotStats } from "
 import { chunkArray } from "@cpz-test-stats/helpers";
 
 export default class EquityCalculator {
-    public constructor(private statistics: RobotStats, private newPosition: PositionDataForStats) {}
+    public constructor(private statistics: RobotStats, private newPosition: PositionDataForStats) {} //unnecessary access modifier
 
     public calculateEquity(): RobotEquity {
         const lastProfit = this.newPosition.profit;

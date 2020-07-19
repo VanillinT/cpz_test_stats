@@ -25,7 +25,7 @@ describe("Test 'tradeStatistics' utils", () => {
 
             correctResult.statistics.lastUpdatedAt = dayjs.utc().toISOString();
 
-            expect(result).toMatchObject(correctResult);
+            expect(result).toStrictEqual(correctResult);
         });
     });
 });

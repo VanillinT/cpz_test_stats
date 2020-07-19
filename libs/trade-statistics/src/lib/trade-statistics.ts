@@ -24,6 +24,7 @@ export interface RobotStatVals<T> {
 export type PerformanceVals = { x: number; y: number }[];
 
 export interface RobotStats {
+    [index: string]: any; // index for iterating over properties
     lastUpdatedAt?: string;
     performance?: PerformanceVals;
     tradesCount?: RobotStatVals<number>;
@@ -53,6 +54,7 @@ export interface RobotStats {
 }
 
 export interface RobotEquity {
+    [index: string]: any; // index for iterating over properties
     profit?: number;
     lastProfit?: number;
     tradesCount?: number;
