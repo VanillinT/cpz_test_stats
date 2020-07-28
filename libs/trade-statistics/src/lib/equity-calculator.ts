@@ -1,28 +1,34 @@
-import { PerformanceVals, PositionDataForStats, RobotEquity, RobotStats } from "@cpz-test-stats/trade-statistics";
+import {
+    PerformanceVals,
+    PositionDataForStats,
+    isPositionDataForStats,
+    RobotEquity,
+    RobotStats,
+    isRobotEquity,
+    isRobotStats
+} from "@cpz-test-stats/trade-statistics";
 import { chunkArray } from "@cpz-test-stats/helpers";
-
 export default class EquityCalculator {
-    public constructor(private statistics: RobotStats, private newPosition: PositionDataForStats) {} //unnecessary access modifier
-
-    public calculateEquity(): RobotEquity {
-        const lastProfit = this.newPosition.profit;
-        const tradesCount = this.statistics.tradesCount.all;
-        const winRate = this.statistics.winRate.all;
-        const profit = this.statistics.netProfit.all;
-        const maxDrawdown = this.statistics.maxDrawdown.all;
-        const changes = this.calculateEquityChanges();
-
-        return {
-            lastProfit,
-            tradesCount,
-            winRate,
-            profit,
-            maxDrawdown,
-            changes
-        };
+    public constructor(private statistics: RobotStats, private newPosition: PositionDataForStats) {
+        if (!statistics || !newPosition) throw new Error("Invalid parameter value");
+        if (!isPositionDataForStats(newPosition)) throw new Error("Invalid position object passed");
+        if (!isRobotStats(statistics)) throw new Error("Invalid statisctics object passed");
     }
 
-    private calculateEquityChanges(): PerformanceVals {
+    public getEquity(): RobotEquity {
+        const equity: RobotEquity = {
+            lastProfit: this.newPosition.profit,
+            tradesCount: this.statistics.tradesCount.all,
+            winRate: this.statistics.winRate.all,
+            profit: this.statistics.netProfit.all,
+            maxDrawdown: this.statistics.maxDrawdown.all,
+            changes: this.getEquityChanges()
+        };
+
+        return equity;
+    }
+
+    private getEquityChanges(): PerformanceVals {
         const maxEquityLength = 50;
         const equityChart = this.statistics.performance;
 

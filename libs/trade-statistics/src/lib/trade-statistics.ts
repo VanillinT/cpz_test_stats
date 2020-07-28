@@ -1,87 +1,123 @@
 import StatisticsCalculator from "./statistics-calculator";
 import EquityCalculator from "./equity-calculator";
-import { roundEquityValues, roundStatisticsValues } from "../helpers";
 
 export const enum PositionDirection {
     long = "long",
     short = "short"
 }
 
-export interface PositionDataForStats {
+export class PositionDataForStats {
+    [index: string]: any;
     id: string;
-    direction?: PositionDirection;
-    exitDate?: string;
-    profit?: number;
-    barsHeld?: number;
+    direction: PositionDirection;
+    exitDate: string;
+    profit: number;
+    barsHeld: number;
 }
 
-export interface RobotStatVals<T> {
-    all?: T;
-    long?: T;
-    short?: T;
+export function isPositionDataForStats(object: any): object is PositionDataForStats {
+    let refObj = new PositionDataForStats();
+    if (Object.keys(object).length != Object.keys(refObj).length) return false;
+    for (let key in object) {
+        if (!(key in refObj)) return false;
+    }
+    return true;
+}
+
+export interface IRobotStatVals<T> {
+    all: T;
+    long: T;
+    short: T;
 }
 
 export type PerformanceVals = { x: number; y: number }[];
 
-export interface RobotStats {
-    [index: string]: any; // index for iterating over properties
-    lastUpdatedAt?: string;
-    performance?: PerformanceVals;
-    tradesCount?: RobotStatVals<number>;
-    tradesWinning?: RobotStatVals<number>;
-    tradesLosing?: RobotStatVals<number>;
-    winRate?: RobotStatVals<number>; //should point out that the value is percentage
-    lossRate?: RobotStatVals<number>; //should point out that the value is percentage
-    avgBarsHeld?: RobotStatVals<number>;
-    avgBarsHeldWinning?: RobotStatVals<number>;
-    avgBarsHeldLosing?: RobotStatVals<number>;
-    netProfit?: RobotStatVals<number>;
-    localMax?: RobotStatVals<number>;
-    avgNetProfit?: RobotStatVals<number>;
-    grossProfit?: RobotStatVals<number>;
-    avgProfit?: RobotStatVals<number>;
-    grossLoss?: RobotStatVals<number>;
-    avgLoss?: RobotStatVals<number>;
-    maxConsecWins?: RobotStatVals<number>; // HERE WAS TYPO
-    maxConsecLosses?: RobotStatVals<number>;
-    currentWinSequence?: RobotStatVals<number>;
-    currentLossSequence?: RobotStatVals<number>; // 'Loose' was a poor choice
-    maxDrawdown?: RobotStatVals<number>;
-    maxDrawdownDate?: RobotStatVals<string>;
-    profitFactor?: RobotStatVals<number>;
-    recoveryFactor?: RobotStatVals<number>;
-    payoffRatio?: RobotStatVals<number>;
+// Classes to eliminate manual object construction
+export class RobotNumberValue implements IRobotStatVals<number> {
+    constructor(public all: number = 0, public long: number = 0, public short: number = 0) {}
 }
 
-export interface RobotEquity {
-    [index: string]: any; // index for iterating over properties
-    profit?: number;
-    lastProfit?: number;
-    tradesCount?: number;
-    winRate?: number;
-    maxDrawdown?: number;
-    changes?: PerformanceVals;
+export class RobotStringValue implements IRobotStatVals<string> {
+    constructor(public all: string = "", public long: string = "", public short: string = "") {}
 }
 
-export interface CommonStats {
-    statistics: RobotStats;
-    equity: RobotEquity;
+export class RobotStats {
+    [index: string]: any;
+    lastUpdatedAt: string = "";
+    performance: PerformanceVals = [];
+    tradesCount = new RobotNumberValue();
+    tradesWinning = new RobotNumberValue();
+    tradesLosing = new RobotNumberValue();
+    winRate = new RobotNumberValue();
+    lossRate = new RobotNumberValue();
+    avgBarsHeld = new RobotNumberValue();
+    avgBarsHeldWinning = new RobotNumberValue();
+    avgBarsHeldLosing = new RobotNumberValue();
+    netProfit = new RobotNumberValue();
+    localMax = new RobotNumberValue();
+    avgNetProfit = new RobotNumberValue();
+    grossProfit = new RobotNumberValue();
+    avgProfit = new RobotNumberValue();
+    grossLoss = new RobotNumberValue();
+    avgLoss = new RobotNumberValue();
+    maxConsecWins = new RobotNumberValue();
+    maxConsecLosses = new RobotNumberValue();
+    currentWinSequence = new RobotNumberValue();
+    currentLossSequence = new RobotNumberValue();
+    maxDrawdown = new RobotNumberValue();
+    maxDrawdownDate = new RobotStringValue();
+    profitFactor = new RobotNumberValue();
+    recoveryFactor = new RobotNumberValue();
+    payoffRatio = new RobotNumberValue();
+}
+
+export function isRobotStats(object: any): object is RobotStats {
+    let refObj = new RobotStats();
+    if (Object.keys(object).length != Object.keys(refObj).length) return false;
+    for (let key in object) {
+        if (!(key in refObj)) return false;
+    }
+    return true;
+}
+
+export class RobotEquity {
+    [index: string]: any;
+    profit: number = 0;
+    lastProfit: number = 0;
+    tradesCount: number = 0;
+    winRate: number = 0;
+    maxDrawdown: number = 0;
+    changes: PerformanceVals = [];
+}
+
+export function isRobotEquity(object: any): object is RobotEquity {
+    let refObj = new RobotEquity();
+    if (Object.keys(object).length != Object.keys(refObj).length) return false;
+    for (let key in object) {
+        if (!(key in refObj)) return false;
+    }
+    return true;
+}
+
+class CommonStats {
+    constructor(public statistics: RobotStats, public equity: RobotEquity) {}
 }
 
 // It is now expected that every value is rounded after each cumulative calculatuion
 export function calcStatisticsCumulatively(
     previousPositionsStatistics: CommonStats,
-    newPosition: PositionDataForStats
+    newPositions: PositionDataForStats[]
 ): CommonStats {
-    if (!newPosition) return previousPositionsStatistics;
+    if (!newPositions || newPositions.length < 1) return previousPositionsStatistics;
 
-    const prevStats = previousPositionsStatistics.statistics;
+    const prevStatistics = previousPositionsStatistics.statistics;
+    const lastPosition = newPositions[newPositions.length - 1];
 
-    const statistics = new StatisticsCalculator(prevStats, newPosition).calculateStatistics();
-    const equity = new EquityCalculator(statistics, newPosition).calculateEquity();
+    const accumulatedStatistics: RobotStats = newPositions.reduce((stats, nextPosition) => {
+        const statistics = new StatisticsCalculator(stats, nextPosition).getNewStats();
+        return statistics;
+    }, prevStatistics);
+    const equity: RobotEquity = new EquityCalculator(accumulatedStatistics, lastPosition).getEquity();
 
-    return {
-        statistics: roundStatisticsValues(statistics),
-        equity: roundEquityValues(equity)
-    }
+    return new CommonStats(accumulatedStatistics, equity);
 }

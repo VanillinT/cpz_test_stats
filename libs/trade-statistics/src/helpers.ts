@@ -1,4 +1,4 @@
-import { RobotEquity, RobotStats, RobotStatVals } from "./lib/trade-statistics";
+import { RobotEquity, RobotStats, RobotNumberValue } from "./lib/trade-statistics";
 import { round } from "mathjs";
 
 // Passing a parameter to function is a bad practice (corrected)
@@ -40,7 +40,7 @@ export function roundEquityValues(equity: RobotEquity): RobotEquity {
     return result;
 }
 
-function roundRobotStatVals(vals: RobotStatVals<number>, decimals = 0): RobotStatVals<number> {
+function roundRobotStatVals(vals: RobotNumberValue, decimals = 0): RobotNumberValue {
     const result = { ...vals };
 
     result.all = result.all ? round(result.all, decimals) : null;
@@ -48,4 +48,8 @@ function roundRobotStatVals(vals: RobotStatVals<number>, decimals = 0): RobotSta
     result.short = result.short ? round(result.short, decimals) : null;
 
     return result;
+}
+
+export function calculatePercentage(a: number, b: number): number {
+    return (a / b) * 100;
 }

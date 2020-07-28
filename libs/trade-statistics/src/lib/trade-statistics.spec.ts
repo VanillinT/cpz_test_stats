@@ -13,15 +13,9 @@ describe("Test 'tradeStatistics' utils", () => {
     });
 
     // Refactored to automatically round every value
-    describe("Test 'calcStatisticsCumulatively'", () => {
+    describe("Test calcStatisticsCumulatively with no previous statistics", () => {
         it("Should cumulatively calculate statistics", () => {
-            const result = positions.reduce(
-                (acc, val) => calcStatisticsCumulatively(acc, val), 
-                {
-                    statistics: null,
-                    equity: null
-                }
-            );
+            const result = calcStatisticsCumulatively({statistics: null, equity: null}, positions)
 
             correctResult.statistics.lastUpdatedAt = dayjs.utc().toISOString();
 
