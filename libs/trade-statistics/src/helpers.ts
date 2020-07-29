@@ -1,4 +1,4 @@
-import { RobotEquity, RobotStats, RobotNumberValue } from "./lib/trade-statistics";
+import { RobotEquity, RobotStats, RobotNumberValue, PositionDirection } from "./lib/trade-statistics";
 import { round } from "mathjs";
 
 // Passing a parameter to function is a bad practice (corrected)
@@ -50,6 +50,112 @@ function roundRobotStatVals(vals: RobotNumberValue, decimals = 0): RobotNumberVa
     return result;
 }
 
-export function calculatePercentage(a: number, b: number): number {
-    return (a / b) * 100;
+export function incrementTradesCount(tradesCount: RobotNumberValue, direction: PositionDirection): RobotNumberValue {
+    let newTradesCount = { ...tradesCount };
+
+    newTradesCount.all++;
+    newTradesCount[direction]++;
+
+    return newTradesCount;
+}
+
+export function calculateRate(
+    prevRate: RobotNumberValue,
+    currentTradesRated: RobotNumberValue,
+    currentTradesCount: RobotNumberValue,
+    direction: PositionDirection
+): RobotNumberValue {
+    let newRate = { ...prevRate };
+
+    newRate.all = (currentTradesRated.all / currentTradesCount.all) * 100;
+    newRate[direction] = (currentTradesRated[direction] / currentTradesCount[direction]) * 100;
+
+    return newRate;
+}
+
+export function calculateAverageBarsHeld(
+    prevAvgBars: RobotNumberValue,
+    prevTradesCount: RobotNumberValue,
+    newTradesCount: RobotNumberValue,
+    newBars: number,
+    direction: PositionDirection
+): RobotNumberValue {
+    let newAvgBars = { ...prevAvgBars };
+
+    const prevBarsAll = prevAvgBars.all * prevTradesCount.all;
+    const prevBarsDir = prevAvgBars[direction] * prevTradesCount[direction];
+
+    newAvgBars.all = (prevBarsAll + newBars) / newTradesCount.all;
+    newAvgBars[direction] = (prevBarsDir + newBars) / newTradesCount[direction];
+
+    return newAvgBars;
+}
+
+export function calculateProfit(
+    prevProfit: RobotNumberValue,
+    profit: number,
+    direction: PositionDirection
+): RobotNumberValue {
+    let newProfit = { ...prevProfit };
+
+    newProfit.all = prevProfit.all + profit;
+    newProfit[direction] = prevProfit[direction] + profit;
+
+    return newProfit;
+}
+
+export function calculateAverageProfit(
+    prevAvgProfit: RobotNumberValue,
+    currentProfit: RobotNumberValue,
+    currentTradesCount: RobotNumberValue,
+    direction: PositionDirection
+): RobotNumberValue {
+    let newAvgProfit = { ...prevAvgProfit };
+
+    newAvgProfit.all = currentProfit.all / currentTradesCount.all;
+    newAvgProfit[direction] = currentProfit[direction] / currentTradesCount[direction];
+
+    return newAvgProfit;
+}
+
+export function calculateRatio(profitStat: RobotNumberValue, lossStat: RobotNumberValue): RobotNumberValue {
+    return new RobotNumberValue(
+        Math.abs(profitStat.all / lossStat.all),
+        Math.abs(profitStat.long / lossStat.long),
+        Math.abs(profitStat.short / lossStat.short)
+    );
+}
+
+export function nullifySequence(prevSequence: RobotNumberValue, direction: PositionDirection): RobotNumberValue {
+    let newSequence = { ...prevSequence };
+
+    newSequence.all = 0;
+    newSequence[direction] = 0;
+
+    return newSequence;
+}
+
+export function incrementSequence(
+    prevSequence: RobotNumberValue,
+    direction: PositionDirection
+): RobotNumberValue {
+    let newSequence = { ...prevSequence };
+
+    newSequence.all = prevSequence.all + 1;
+    newSequence[direction] = prevSequence[direction] + 1;
+
+    return newSequence;
+}
+
+export function incrementMaxSequence(
+    prevSequence: RobotNumberValue,
+    maxSequence: RobotNumberValue,
+    direction: PositionDirection
+): RobotNumberValue {
+    let newMax = { ...maxSequence };
+
+    newMax.all = Math.max(maxSequence.all, prevSequence.all + 1);
+    newMax[direction] = Math.max(maxSequence[direction], prevSequence[direction] + 1);
+
+    return newMax;
 }

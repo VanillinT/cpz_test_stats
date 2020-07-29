@@ -16,9 +16,9 @@ describe("statistics-calculator + equity-calculator test", () => {
         describe("Testing StatisticsCalculator with valid input", () => {
             const statsCalculator = new StatisticsCalculator(prevStats, newPosition);
             const calculatedStats = statsCalculator.getNewStats();
-            const roundStats = roundStatisticsValues(calculatedStats);
-            
             correctFinalStatistics.lastUpdatedAt = dayjs.utc().toISOString(); // might not match desired value
+            
+            const roundStats = roundStatisticsValues(calculatedStats);
 
             describe("Resulting object values test", () => {
                 for (let prop in roundStats) {
@@ -39,6 +39,7 @@ describe("statistics-calculator + equity-calculator test", () => {
                 });
             });
 
+            // compilation exception
             // describe("Testing constructor with empty object prodived", () => {
             //     it("Should throw error", () => {
             //         expect(() => {
@@ -90,6 +91,7 @@ describe("statistics-calculator + equity-calculator test", () => {
                 });
             });
 
+            // compilation exception
             // describe("Testing constructor with empty object provided", () => {
             //     it("Should throw error", () => {
             //         expect(() => {

@@ -1,6 +1,6 @@
 import { CommonStats } from "../trade-statistics";
 
-const result: CommonStats = new CommonStats(
+const result = new CommonStats(
     {
         tradesCount: { all: 318, long: 176, short: 142 },
         tradesWinning: { all: 137, long: 76, short: 61 },
