@@ -1,6 +1,7 @@
 import StatisticsCalculator from "./statistics-calculator";
 import EquityCalculator from "./equity-calculator";
-
+import { roundStatisticsValues, roundEquityValues } from "../helpers";
+import { round } from "@cpz-test-stats/helpers";
 export const enum PositionDirection {
     long = "long",
     short = "short"
@@ -8,11 +9,11 @@ export const enum PositionDirection {
 
 export class PositionDataForStats {
     [index: string]: any;
-    id: string;
-    direction: PositionDirection;
-    exitDate: string;
-    profit: number;
-    barsHeld: number;
+    id: string = "";
+    direction: PositionDirection = PositionDirection.short;
+    exitDate: string = "";
+    profit: number = 0;
+    barsHeld: number = 0;
 }
 
 export function isPositionDataForStats(object: any): object is PositionDataForStats {
@@ -72,7 +73,7 @@ export class RobotStats {
 }
 
 export function isRobotStats(object: any): object is RobotStats {
-    let refObj = new RobotStats();
+    const refObj = new RobotStats();
     if (Object.keys(object).length != Object.keys(refObj).length) return false;
     for (let key in object) {
         if (!(key in refObj)) return false;
@@ -99,7 +100,7 @@ export function isRobotEquity(object: any): object is RobotEquity {
     return true;
 }
 
-class CommonStats {
+export class CommonStats {
     constructor(public statistics: RobotStats, public equity: RobotEquity) {}
 }
 
@@ -115,9 +116,13 @@ export function calcStatisticsCumulatively(
 
     const accumulatedStatistics: RobotStats = newPositions.reduce((stats, nextPosition) => {
         const statistics = new StatisticsCalculator(stats, nextPosition).getNewStats();
-        return statistics;
+        const roundStatistics = roundStatisticsValues(statistics);
+        return roundStatistics;
     }, prevStatistics);
-    const equity: RobotEquity = new EquityCalculator(accumulatedStatistics, lastPosition).getEquity();
 
-    return new CommonStats(accumulatedStatistics, equity);
+    const equity: RobotEquity = new EquityCalculator(accumulatedStatistics, lastPosition).getEquity();
+    
+    const roundEquity = roundEquityValues(equity);
+    
+    return new CommonStats(accumulatedStatistics, roundEquity);
 }

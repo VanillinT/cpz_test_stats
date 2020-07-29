@@ -1,7 +1,7 @@
 import { CommonStats } from "../trade-statistics";
 
-const result: CommonStats = {
-    statistics: {
+const result: CommonStats = new CommonStats(
+    {
         tradesCount: { all: 318, long: 176, short: 142 },
         tradesWinning: { all: 137, long: 76, short: 61 },
         tradesLosing: { all: 180, long: 99, short: 81 },
@@ -352,7 +352,7 @@ const result: CommonStats = {
         recoveryFactor: { all: 2.31, long: 2.14, short: 1.75 },
         lastUpdatedAt: "2019-01-01T13:17:00.000Z"
     },
-    equity: {
+    {
         lastProfit: -127.07,
         tradesCount: 318,
         winRate: 43,
@@ -414,6 +414,6 @@ const result: CommonStats = {
             { x: 1584106528812, y: 1639.72 }
         ]
     }
-};
+);
 
 export default result;

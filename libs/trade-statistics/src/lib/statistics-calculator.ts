@@ -4,28 +4,30 @@ import {
     RobotNumberValue,
     RobotStats,
     isRobotStats
-} from "@cpz-test-stats/trade-statistics";
-import { calculatePercentage, roundStatisticsValues } from "../helpers";
+} from "./trade-statistics";
+import { calculatePercentage } from "../helpers";
 import { dayjs } from "@cpz-test-stats/dayjs";
 import { round } from "mathjs";
 
 export default class StatisticsCalculator {
+    private readonly prevStatistics: RobotStats;
     private currentStatistics: RobotStats;
+    private readonly newPosition: PositionDataForStats;
     private readonly dir: PositionDirection;
 
-    public constructor(
-        private readonly prevStatistics: RobotStats,
-        private readonly newPosition: PositionDataForStats
-    ) {
-        if (prevStatistics != null && !isRobotStats(prevStatistics)) throw new Error("Invalid object provided"); // calculations are allowed if null or valid obj is provided
-        if (prevStatistics == null) prevStatistics = new RobotStats();
+    public constructor(prevStatistics: RobotStats, newPosition: PositionDataForStats) {
+        if (prevStatistics != null && !isRobotStats(prevStatistics))
+            throw new Error("Invalid statistics object provided"); // calculations are allowed if null or valid obj is provided
 
+        this.newPosition = newPosition;
         this.dir = this.newPosition.direction;
-        this.currentStatistics = { ...prevStatistics };
+        this.prevStatistics = prevStatistics || new RobotStats();
+        this.currentStatistics = JSON.parse(JSON.stringify(this.prevStatistics));
+
     }
 
     public getNewStats(): RobotStats {
-        this.updateStatistics().roundCurrentStatistics();
+        this.updateStatistics() /*.roundCurrentStatistics()*/;
         return this.currentStatistics;
     }
 
@@ -43,26 +45,25 @@ export default class StatisticsCalculator {
             .updateLocalMax()
             .updateAvgNetProfit()
             .updateGrossProfit()
-            .calculateGrossLoss()
-            .calculateAvgProfit()
-            .calculateAvgLoss()
-            .calculateGrossLoss()
-            .calculateProfitFactor()
-            .calculatePayoffRatio()
-            .calculateMaxConsecWins()
-            .calculateMaxConsecLosses()
-            .calculateMaxDrawdown()
-            .calculatePerformance()
-            .calculateRecoveryFactor()
+            .updateGrossLoss()
+            .updateAvgProfit()
+            .updateAvgLoss()
+            .updateProfitFactor()
+            .updatePayoffRatio()
+            .updateMaxConsecWins()
+            .updateMaxConsecLosses()
+            .updateMaxDrawdown()
+            .updatePerformance()
+            .updateRecoveryFactor()
             .updateLastUpdated();
 
         return this;
     }
 
-    private roundCurrentStatistics(): StatisticsCalculator {
-        this.currentStatistics = roundStatisticsValues(this.currentStatistics);
-        return this;
-    }
+    // private roundCurrentStatistics(): StatisticsCalculator {
+    //     this.currentStatistics = roundStatisticsValues(this.currentStatistics);
+    //     return this;
+    // }
 
     private updateTradesAll(): StatisticsCalculator {
         const tradesCount = this.currentStatistics.tradesCount;
@@ -174,7 +175,7 @@ export default class StatisticsCalculator {
     }
 
     private updateNetProfit(): StatisticsCalculator {
-        const netProfit = this.prevStatistics.netProfit;
+        const netProfit = this.currentStatistics.netProfit;
 
         netProfit.all = this.prevStatistics.netProfit.all + this.newPosition.profit;
         netProfit[this.dir] = this.prevStatistics.netProfit[this.dir] + this.newPosition.profit;
@@ -183,7 +184,7 @@ export default class StatisticsCalculator {
     }
 
     private updateLocalMax(): StatisticsCalculator {
-        const localMax = this.prevStatistics.localMax;
+        const localMax = this.currentStatistics.localMax;
 
         localMax.all = Math.max(this.prevStatistics.localMax.all, this.currentStatistics.netProfit.all);
         localMax[this.dir] = Math.max(
@@ -195,7 +196,7 @@ export default class StatisticsCalculator {
     }
 
     private updateAvgNetProfit(): StatisticsCalculator {
-        const avgNetProfit = this.prevStatistics.avgNetProfit;
+        const avgNetProfit = this.currentStatistics.avgNetProfit;
 
         avgNetProfit.all = this.currentStatistics.netProfit.all / this.currentStatistics.tradesCount.all;
         avgNetProfit[this.dir] =
@@ -205,7 +206,7 @@ export default class StatisticsCalculator {
     }
 
     private updateGrossProfit(): StatisticsCalculator {
-        const grossProfit = this.prevStatistics.grossProfit;
+        const grossProfit = this.currentStatistics.grossProfit;
 
         if (this.newPosition.profit > 0) {
             grossProfit.all = this.prevStatistics.grossProfit.all + this.newPosition.profit;
@@ -215,8 +216,8 @@ export default class StatisticsCalculator {
         return this;
     }
 
-    private calculateGrossLoss(): StatisticsCalculator {
-        const grossLoss = this.prevStatistics.grossLoss;
+    private updateGrossLoss(): StatisticsCalculator {
+        const grossLoss = this.currentStatistics.grossLoss;
 
         if (this.newPosition.profit < 0) {
             grossLoss.all = this.prevStatistics.grossLoss.all + this.newPosition.profit;
@@ -226,8 +227,8 @@ export default class StatisticsCalculator {
         return this;
     }
 
-    private calculateAvgProfit(): StatisticsCalculator {
-        const avgProfit = this.prevStatistics.avgProfit;
+    private updateAvgProfit(): StatisticsCalculator {
+        const avgProfit = this.currentStatistics.avgProfit;
 
         if (this.newPosition.profit > 0) {
             avgProfit.all = this.currentStatistics.grossProfit.all / this.currentStatistics.tradesWinning.all;
@@ -238,8 +239,8 @@ export default class StatisticsCalculator {
         return this;
     }
 
-    private calculateAvgLoss(): StatisticsCalculator {
-        const avgLoss = this.prevStatistics.avgLoss;
+    private updateAvgLoss(): StatisticsCalculator {
+        const avgLoss = this.currentStatistics.avgLoss;
 
         if (this.newPosition.profit < 0) {
             avgLoss.all = this.currentStatistics.grossLoss.all / this.currentStatistics.tradesLosing.all;
@@ -250,7 +251,7 @@ export default class StatisticsCalculator {
         return this;
     }
 
-    private calculateProfitFactor(): StatisticsCalculator {
+    private updateProfitFactor(): StatisticsCalculator {
         this.currentStatistics.profitFactor = new RobotNumberValue(
             Math.abs(this.currentStatistics.grossProfit.all / this.currentStatistics.grossLoss.all),
             Math.abs(this.currentStatistics.grossProfit.long / this.currentStatistics.grossLoss.long),
@@ -260,7 +261,7 @@ export default class StatisticsCalculator {
         return this;
     }
 
-    private calculatePayoffRatio(): StatisticsCalculator {
+    private updatePayoffRatio(): StatisticsCalculator {
         this.currentStatistics.payoffRatio = new RobotNumberValue(
             Math.abs(this.currentStatistics.avgProfit.all / this.currentStatistics.avgLoss.all),
             Math.abs(this.currentStatistics.avgProfit.long / this.currentStatistics.avgLoss.long),
@@ -270,7 +271,7 @@ export default class StatisticsCalculator {
         return this;
     }
 
-    private calculateMaxConsecWins(): StatisticsCalculator {
+    private updateMaxConsecWins(): StatisticsCalculator {
         let directionSequence = this.prevStatistics.currentWinSequence[this.dir];
 
         if (this.newPosition.profit <= 0) {
@@ -301,7 +302,7 @@ export default class StatisticsCalculator {
         return this;
     }
 
-    private calculateMaxConsecLosses(): StatisticsCalculator {
+    private updateMaxConsecLosses(): StatisticsCalculator {
         let directionSequence = this.prevStatistics.currentLossSequence[this.dir];
 
         if (this.newPosition.profit >= 0) {
@@ -332,7 +333,7 @@ export default class StatisticsCalculator {
         return this;
     }
 
-    private calculateMaxDrawdown(): StatisticsCalculator {
+    private updateMaxDrawdown(): StatisticsCalculator {
         const currentDrawdownAll = this.currentStatistics.netProfit.all - this.currentStatistics.localMax.all;
         let maxDrawdownAll = 0;
         let drawdownAllDate = "";
@@ -366,7 +367,7 @@ export default class StatisticsCalculator {
         return this;
     }
 
-    private calculatePerformance(): StatisticsCalculator {
+    private updatePerformance(): StatisticsCalculator {
         if (isNaN(this.newPosition.profit)) {
             //this.currentStatistics.performance = { ...this.prevStatistics.performance };
             return;
@@ -388,8 +389,8 @@ export default class StatisticsCalculator {
         return this;
     }
 
-    private calculateRecoveryFactor(): StatisticsCalculator {
-        const recoveryFactor = this.prevStatistics.recoveryFactor;
+    private updateRecoveryFactor(): StatisticsCalculator {
+        const recoveryFactor = this.currentStatistics.recoveryFactor;
 
         recoveryFactor.all = (this.currentStatistics.netProfit.all / this.currentStatistics.maxDrawdown.all) * -1;
         recoveryFactor[this.dir] =

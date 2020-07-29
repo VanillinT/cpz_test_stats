@@ -3,6 +3,7 @@ import EquityCalculator from "./equity-calculator";
 import positions from "./testData/positionsForStats";
 import correctFinalResult from "./testData/correctResultAfterRefactor";
 import statsWithoutLastPos from "./testData/correctWithoutLastPos";
+import { roundStatisticsValues, roundEquityValues } from "../helpers";
 import { dayjs } from "@cpz-test-stats/dayjs";
 
 describe("statistics-calculator + equity-calculator test", () => {
@@ -15,13 +16,14 @@ describe("statistics-calculator + equity-calculator test", () => {
         describe("Testing StatisticsCalculator with valid input", () => {
             const statsCalculator = new StatisticsCalculator(prevStats, newPosition);
             const calculatedStats = statsCalculator.getNewStats();
-
+            const roundStats = roundStatisticsValues(calculatedStats);
+            
             correctFinalStatistics.lastUpdatedAt = dayjs.utc().toISOString(); // might not match desired value
 
             describe("Resulting object values test", () => {
-                for (let prop in calculatedStats) {
+                for (let prop in roundStats) {
                     it(`Should be equal to  ${prop} of reference object`, () => {
-                        expect(calculatedStats[prop]).toStrictEqual(correctFinalStatistics[prop]);
+                        expect(roundStats[prop]).toStrictEqual(correctFinalStatistics[prop]);
                     });
                 }
             });
@@ -56,15 +58,16 @@ describe("statistics-calculator + equity-calculator test", () => {
     });
 
     describe("equity-calculator test", () => {
-        const calculatedStats = new StatisticsCalculator(prevStats, newPosition).getNewStats();
+        const latestStats = correctFinalResult.statistics;
         describe("Testing EquityCalculator with valid input", () => {
-            const equityCalculator = new EquityCalculator(calculatedStats, newPosition);
+            const equityCalculator = new EquityCalculator(latestStats, newPosition);
             const calculatedEquity = equityCalculator.getEquity();
+            const roundEquity = roundEquityValues(calculatedEquity);
 
             describe("Resulting object values test", () => {
                 for (let prop in calculatedEquity) {
                     it(`Should be equal to  ${prop} of reference object`, () => {
-                        expect(calculatedEquity[prop]).toStrictEqual(correctFinalEquity[prop]);
+                        expect(roundEquity[prop]).toStrictEqual(correctFinalEquity[prop]);
                     });
                 }
             });
