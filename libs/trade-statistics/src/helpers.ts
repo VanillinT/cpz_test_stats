@@ -1,6 +1,13 @@
-import { RobotEquity, RobotStats, RobotNumberValue, PositionDirection } from "./lib/trade-statistics";
-import { round } from "mathjs";
-
+import {
+    RobotEquity,
+    RobotStats,
+    RobotNumberValue,
+    PositionDirection,
+    RobotStringValue,
+    PerformanceVals
+} from "./lib/trade-statistics";
+import { dayjs } from "@cpz-test-stats/dayjs";
+import { round, max } from "mathjs";
 // Passing a parameter to function is a bad practice (corrected)
 export function roundStatisticsValues(statistics: RobotStats): RobotStats {
     const result = { ...statistics };
@@ -135,10 +142,7 @@ export function nullifySequence(prevSequence: RobotNumberValue, direction: Posit
     return newSequence;
 }
 
-export function incrementSequence(
-    prevSequence: RobotNumberValue,
-    direction: PositionDirection
-): RobotNumberValue {
+export function incrementSequence(prevSequence: RobotNumberValue, direction: PositionDirection): RobotNumberValue {
     let newSequence = { ...prevSequence };
 
     newSequence.all = prevSequence.all + 1;
@@ -156,6 +160,72 @@ export function incrementMaxSequence(
 
     newMax.all = Math.max(maxSequence.all, prevSequence.all + 1);
     newMax[direction] = Math.max(maxSequence[direction], prevSequence[direction] + 1);
+
+    return newMax;
+}
+
+export function calculateMaxDrawdown(
+    prevDrawdown: RobotNumberValue,
+    netProfit: RobotNumberValue,
+    localMax: RobotNumberValue,
+    direction: PositionDirection
+): RobotNumberValue {
+    const currentDrawdownAll = netProfit.all - localMax.all;
+    const currentDrawdownDir = netProfit[direction] - localMax[direction];
+
+    let newDrawdown = { ...prevDrawdown };
+
+    newDrawdown.all = currentDrawdownAll > prevDrawdown.all ? 0 : currentDrawdownAll;
+    newDrawdown[direction] = currentDrawdownDir > prevDrawdown[direction] ? 0 : currentDrawdownDir;
+
+    return newDrawdown;
+}
+
+export function calculateMaxDrawdownDate(
+    prevDate: RobotStringValue,
+    exitDate: string,
+    direction: PositionDirection
+): RobotStringValue {
+    let newDate = { ...prevDate };
+
+    newDate.all = exitDate;
+    newDate[direction] = exitDate;
+
+    return newDate;
+}
+
+export function calculatePerformance(
+    prevPerformance: PerformanceVals,
+    profit: number,
+    exitDate: string
+): PerformanceVals {
+    let newPerformance = [...prevPerformance];
+    const prevSum = prevPerformance.length > 0 ? prevPerformance[prevPerformance.length - 1].y : 0;
+
+    newPerformance.push({ x: dayjs.utc(exitDate).valueOf(), y: round(prevSum + profit, 2) });
+
+    return newPerformance;
+}
+
+export function calculateRecoveryFactor(
+    prevFactor: RobotNumberValue,
+    netProfit: RobotNumberValue,
+    maxDrawdown: RobotNumberValue,
+    direction: PositionDirection
+): RobotNumberValue {
+    let newFactor = { ...prevFactor };
+
+    newFactor.all = (netProfit.all / maxDrawdown.all) * -1;
+    newFactor[direction] = (netProfit[direction] / maxDrawdown[direction]) * -1;
+
+    return newFactor;
+}
+
+export function calculateLocalMax(prevMax:RobotNumberValue, netProfit:RobotNumberValue,direction:PositionDirection){
+    let newMax = {...prevMax}
+
+    newMax.all = Math.max(prevMax.all, netProfit.all)
+    newMax[direction] = Math.max(prevMax[direction], netProfit[direction])
 
     return newMax;
 }
