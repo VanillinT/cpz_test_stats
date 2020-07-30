@@ -1,7 +1,6 @@
 import StatisticsCalculator from "./statistics-calculator";
 import EquityCalculator from "./equity-calculator";
 import { roundStatisticsValues, roundEquityValues } from "../helpers";
-import { round } from "@cpz-test-stats/helpers";
 export const enum PositionDirection {
     long = "long",
     short = "short"
@@ -35,10 +34,12 @@ export type PerformanceVals = { x: number; y: number }[];
 
 // Classes to eliminate manual object construction
 export class RobotNumberValue implements IRobotStatVals<number> {
+    [index: string]: number;
     constructor(public all: number = 0, public long: number = 0, public short: number = 0) {}
 }
 
 export class RobotStringValue implements IRobotStatVals<string> {
+    [index: string]: string;
     constructor(public all: string = "", public long: string = "", public short: string = "") {}
 }
 

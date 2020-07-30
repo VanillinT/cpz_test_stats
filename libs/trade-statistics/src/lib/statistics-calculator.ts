@@ -301,7 +301,6 @@ export default class StatisticsCalculator {
     }
 
     private updateMaxDrawdownDate(): StatisticsCalculator {
-        if (this.prevStatistics.maxDrawdownDate != this.currentStatistics.maxDrawdownDate)
             this.currentStatistics.maxDrawdownDate = calculateMaxDrawdownDate(
                 this.prevStatistics.maxDrawdownDate,
                 this.newPosition.exitDate,
