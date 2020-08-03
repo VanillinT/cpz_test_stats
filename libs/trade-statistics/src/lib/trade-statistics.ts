@@ -1,6 +1,5 @@
 import StatisticsCalculator from "./statistics-calculator";
 import EquityCalculator from "./equity-calculator";
-import { roundStatisticsValues, roundEquityValues } from "../helpers";
 export const enum PositionDirection {
     long = "long",
     short = "short"
@@ -17,9 +16,9 @@ export class PositionDataForStats {
 
 export function isPositionDataForStats(object: any): object is PositionDataForStats {
     let refObj = new PositionDataForStats();
-    if (Object.keys(object).length != Object.keys(refObj).length) return false;
-    for (let key in object) {
-        if (!(key in refObj)) return false;
+    for (let key in refObj) {
+        if (!(key in object)) return false;
+        if (object[key] == null) return false;
     }
     return true;
 }
@@ -68,16 +67,17 @@ export class RobotStats {
     currentLossSequence = new RobotNumberValue();
     maxDrawdown = new RobotNumberValue();
     maxDrawdownDate = new RobotStringValue();
-    profitFactor = new RobotNumberValue();
-    recoveryFactor = new RobotNumberValue();
-    payoffRatio = new RobotNumberValue();
+    profitFactor?: RobotNumberValue = new RobotNumberValue(null, null, null);
+    recoveryFactor?: RobotNumberValue = new RobotNumberValue(null, null, null);
+    payoffRatio?: RobotNumberValue = new RobotNumberValue(null, null, null);
 }
 
 export function isRobotStats(object: any): object is RobotStats {
     const refObj = new RobotStats();
-    if (Object.keys(object).length != Object.keys(refObj).length) return false;
-    for (let key in object) {
-        if (!(key in refObj)) return false;
+    for (let key in refObj) {
+        if (!(key in object)) return false;
+        if (refObj[key].all != null)
+            if (object[key].all == null || object[key].long == null || object[key].short == null) return false;
     }
     return true;
 }
@@ -108,22 +108,16 @@ export class CommonStats {
 // It is now expected that every value is rounded after each cumulative calculatuion
 export function calcStatisticsCumulatively(
     previousPositionsStatistics: CommonStats,
-    newPositions: PositionDataForStats[]
+    positions: PositionDataForStats[]
 ): CommonStats {
-    if (!newPositions || newPositions.length < 1) return previousPositionsStatistics;
+    if (!positions || positions.length < 1) return previousPositionsStatistics;
 
     const prevStatistics = previousPositionsStatistics.statistics;
-    const lastPosition = newPositions[newPositions.length - 1];
+    const lastPosition = positions[positions.length - 1];
 
-    const accumulatedStatistics: RobotStats = newPositions.reduce((stats, nextPosition) => {
-        const statistics = new StatisticsCalculator(stats, nextPosition).getNewStats();
-        const roundStatistics = roundStatisticsValues(statistics);
-        return roundStatistics;
-    }, prevStatistics);
+    const statistics = new StatisticsCalculator(prevStatistics, positions).getStats();
 
-    const equity: RobotEquity = new EquityCalculator(accumulatedStatistics, lastPosition).getEquity();
-    
-    const roundEquity = roundEquityValues(equity);
-    
-    return new CommonStats(accumulatedStatistics, roundEquity);
+    const equity: RobotEquity = new EquityCalculator(statistics, lastPosition).getEquity();
+
+    return new CommonStats(statistics, equity);
 }

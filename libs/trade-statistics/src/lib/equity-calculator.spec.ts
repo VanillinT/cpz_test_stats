@@ -1,7 +1,6 @@
 import EquityCalculator from "./equity-calculator";
 import positions from "./testData/positionsForStats";
 import correctFinalResult from "./testData/correctResultAfterRefactor";
-import { roundEquityValues } from "../helpers";
 import { invalidStatistics, invalidPosition } from "./testData/invalidData";
 
 describe("equity-calculator test", () => {
@@ -12,12 +11,11 @@ describe("equity-calculator test", () => {
         const latestStats = correctFinalResult.statistics;
         const equityCalculator = new EquityCalculator(latestStats, newPosition);
         const calculatedEquity = equityCalculator.getEquity();
-        const roundEquity = roundEquityValues(calculatedEquity);
 
         describe("Resulting object values test", () => {
             for (let prop in calculatedEquity) {
                 it(`Should be equal to  ${prop} of reference object`, () => {
-                    expect(roundEquity[prop]).toStrictEqual(correctFinalEquity[prop]);
+                    expect(calculatedEquity[prop]).toStrictEqual(correctFinalEquity[prop]);
                 });
             }
         });

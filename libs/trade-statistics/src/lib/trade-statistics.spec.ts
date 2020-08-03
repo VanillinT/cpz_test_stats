@@ -1,6 +1,6 @@
 import MockDate from "mockdate";
 import { dayjs } from "@cpz-test-stats/dayjs";
-import { calcStatisticsCumulatively } from "./trade-statistics";
+import { calcStatisticsCumulatively, RobotStats } from "./trade-statistics";
 import positions from "./testData/positionsForStats";
 import correctResult  from "./testData/correctResultAfterRefactor";
 

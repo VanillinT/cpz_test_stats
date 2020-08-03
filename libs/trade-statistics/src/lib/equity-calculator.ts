@@ -4,10 +4,9 @@ import {
     isPositionDataForStats,
     RobotEquity,
     RobotStats,
-    isRobotEquity,
     isRobotStats
 } from "./trade-statistics";
-import { chunkArray } from "@cpz-test-stats/helpers";
+import { chunkArray, round } from "@cpz-test-stats/helpers";
 export default class EquityCalculator {
     public constructor(private statistics: RobotStats, private newPosition: PositionDataForStats) {
         if (!statistics || !newPosition) throw new Error("Invalid parameter value");
@@ -16,7 +15,7 @@ export default class EquityCalculator {
     }
 
     public getEquity(): RobotEquity {
-        const equity: RobotEquity = {
+        let equity: RobotEquity = {
             lastProfit: this.newPosition.profit,
             tradesCount: this.statistics.tradesCount.all,
             winRate: this.statistics.winRate.all,
@@ -24,6 +23,8 @@ export default class EquityCalculator {
             maxDrawdown: this.statistics.maxDrawdown.all,
             changes: this.getEquityChanges()
         };
+
+        equity = roundEquityValues(equity);
 
         return equity;
     }
@@ -49,4 +50,15 @@ export default class EquityCalculator {
             y: chunk[chunk.length - 1].y
         }));
     }
+}
+
+function roundEquityValues(equity: RobotEquity): RobotEquity {
+    const result = { ...equity };
+
+    result.lastProfit = round(result.lastProfit, 2);
+    result.profit = round(result.profit, 2);
+    result.maxDrawdown = round(result.maxDrawdown, 2);
+    result.winRate = round(result.winRate);
+
+    return result;
 }
