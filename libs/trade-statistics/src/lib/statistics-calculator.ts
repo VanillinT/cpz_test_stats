@@ -21,9 +21,17 @@ export default class StatisticsCalculator {
 
     public constructor(prevStatistics: RobotStats, positions: PositionDataForStats[]) {
         if (positions.length < 1) throw new Error("At least 1 position expected");
-        this.positions = positions;
+
+        for (let pos of positions) if (!isPositionDataForStats(pos)) throw new Error("Invalid position provided");
+
         if (prevStatistics != null && !isRobotStats(prevStatistics))
             throw new Error("Invalid statistics object provided"); // calculations are allowed if null or valid obj is provided
+
+        if (prevStatistics && prevStatistics.lastPositionExitDate != "")
+            this.positions = positions.filter(
+                (pos) => dayjs.utc(pos.exitDate).valueOf() > dayjs.utc(prevStatistics.lastPositionExitDate).valueOf()
+            );
+        else this.positions = positions;
 
         this.setPosition(0);
         this.setStatistics(prevStatistics);
@@ -50,7 +58,6 @@ export default class StatisticsCalculator {
 
     private setPosition(idx: number) {
         this.newPosition = this.positions[idx];
-        if (!isPositionDataForStats(this.newPosition)) throw new Error("Invalid position provided");
         this.dir = this.newPosition.direction;
     }
 
@@ -84,11 +91,13 @@ export default class StatisticsCalculator {
             .updateRecoveryFactor()
             .validateRating()
             .roundCurrentStatistics()
+            .updateLastExitDate()
             .updateLastUpdated();
 
         return this;
     }
 
+    //#region Private methods
     private roundCurrentStatistics(): StatisticsCalculator {
         this.currentStatistics = roundStatisticsValues(this.currentStatistics);
         return this;
@@ -331,6 +340,13 @@ export default class StatisticsCalculator {
         return this;
     }
 
+    private updateLastExitDate(): StatisticsCalculator {
+        this.currentStatistics.lastPositionExitDate = this.newPosition.exitDate;
+        return this;
+    }
+    //#endregion
+
+    //#region Public methods
     public incrementTradesCount(tradesCount: RobotNumberValue): RobotNumberValue {
         validateArguments(tradesCount.all, tradesCount[this.dir]);
 
@@ -535,7 +551,15 @@ export default class StatisticsCalculator {
         recoveryFactorWeight: number = 0.25,
         payoffRatioWeight: number = 0.4
     ): RobotNumberValue {
-        validateArguments(profitFactor.all, profitFactor.long, profitFactor.short, payoffRatio.all, payoffRatio.long, payoffRatio.short, recoveryFactor.all);
+        validateArguments(
+            profitFactor.all,
+            profitFactor.long,
+            profitFactor.short,
+            payoffRatio.all,
+            payoffRatio.long,
+            payoffRatio.short,
+            recoveryFactor.all
+        );
 
         if (!isFinite(profitFactorWeight) || !isFinite(recoveryFactorWeight) || !isFinite(payoffRatioWeight))
             throw new Error("Arguments must be finite numbers");
@@ -549,13 +573,13 @@ export default class StatisticsCalculator {
                 recoveryFactorWeight * recoveryFactor.all // check calculateRecoveryFactor method
         );
     }
+    //#endregion
 }
 
 function validateArguments(...args: any[]) {
     let reasonMsg = "Updating methods might have been called in wrong order.";
     for (let arg of args) {
         if (arg == null) {
-            console.log(JSON.stringify(args));
             throw new Error(`Validation error: argument ${args.indexOf(arg)} cannot be null. ` + reasonMsg);
         }
     }

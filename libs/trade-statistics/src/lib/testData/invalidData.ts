@@ -26,7 +26,8 @@ export const invalidStatistics: RobotStats = {
     maxDrawdownDate: null,
     profitFactor: null,
     recoveryFactor: null,
-    payoffRatio: null
+    payoffRatio: null,
+    lastPositionExitDate: null
 }
 
 export const invalidPosition: PositionDataForStats = {

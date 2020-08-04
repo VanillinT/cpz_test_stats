@@ -29,6 +29,7 @@ const result = new CommonStats(
             short: "2020-03-12T16:00:10.443"
         },
         maxDrawdown: { all: -581.82, long: -496.79, short: -202.98 },
+        lastPositionExitDate: "2020-03-12T16:00:10.443",
         performance: [
             { x: 1492012800000, y: -0.5 },
             { x: 1492243200000, y: -1.26 },

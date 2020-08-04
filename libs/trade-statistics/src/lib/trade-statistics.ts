@@ -45,6 +45,7 @@ export class RobotStringValue implements IRobotStatVals<string> {
 export class RobotStats {
     [index: string]: any;
     lastUpdatedAt: string = "";
+    lastPositionExitDate: string = "";
     performance: PerformanceVals = [];
     tradesCount = new RobotNumberValue();
     tradesWinning = new RobotNumberValue();
@@ -67,9 +68,9 @@ export class RobotStats {
     currentLossSequence = new RobotNumberValue();
     maxDrawdown = new RobotNumberValue();
     maxDrawdownDate = new RobotStringValue();
-    profitFactor?: RobotNumberValue = new RobotNumberValue(null, null, null);
-    recoveryFactor?: RobotNumberValue = new RobotNumberValue(null, null, null);
-    payoffRatio?: RobotNumberValue = new RobotNumberValue(null, null, null);
+    profitFactor? = new RobotNumberValue(null, null, null);
+    recoveryFactor? = new RobotNumberValue(null, null, null);
+    payoffRatio? = new RobotNumberValue(null, null, null);
 }
 
 export function isRobotStats(object: any): object is RobotStats {
