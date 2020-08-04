@@ -5,22 +5,23 @@ import statsWithoutLastPos from "./testData/correctWithoutLastPos";
 import { dayjs } from "@cpz-test-stats/dayjs";
 import { RobotStats, PositionDataForStats, RobotNumberValue } from "./trade-statistics";
 import { invalidStatistics, invalidPosition } from "./testData/invalidData";
-import { similarity } from "@cpz-test-stats/helpers";
 
 describe("statistics-calculator test", () => {
     const newPosition = positions[positions.length - 1];
-    const prevStats = statsWithoutLastPos.statistics;
+    const prevStatisticsObject = statsWithoutLastPos.statistics;
     const correctFinalStatistics = correctFinalResult.statistics;
     describe("Testing StatisticsCalculator with valid input", () => {
         describe("Resulting object values test", () => {
-            const statsCalculator = new StatisticsCalculator(prevStats, [newPosition]);
+            const statsCalculator = new StatisticsCalculator(prevStatisticsObject, [newPosition]);
             const calculatedStats = statsCalculator.getStats();
             correctFinalStatistics.lastUpdatedAt = dayjs.utc().toISOString(); // might not match desired value
 
             for (let prop in calculatedStats) {
                 it(`Should be equal to  ${prop} of reference object`, () => {
                     if (prop == "lastUpdatedAt")
-                        expect(similarity(calculatedStats[prop], correctFinalStatistics[prop]) > 0.95).toBe(true);
+                        expect((calculatedStats[prop] as string).slice(0, 23)).toStrictEqual(
+                            (correctFinalStatistics[prop] as string).slice(0, 23)
+                        );
                     else expect(calculatedStats[prop]).toStrictEqual(correctFinalStatistics[prop]);
                 });
             }
@@ -305,12 +306,14 @@ describe("Statistics functions test", () => {
     });
 
     describe("calculatePerformance test", () => {
-        const prevPerformance = prevStatisticsObject.performance,
-            exitDate = newPos.exitDate;
+        it("Should update preformance", () => {
+            const prevPerformance = prevStatisticsObject.performance,
+                exitDate = newPos.exitDate;
 
-        currentStatisticsObject.performance = sc.calculatePerformance(prevPerformance, profit, exitDate);
+            currentStatisticsObject.performance = sc.calculatePerformance(prevPerformance, profit, exitDate);
 
-        expect(currentStatisticsObject.performance).toStrictEqual(referenceStatisticsObject.performance);
+            expect(currentStatisticsObject.performance).toStrictEqual(referenceStatisticsObject.performance);
+        });
     });
 
     describe("calculateRecoveryFactor test", () => {
@@ -325,6 +328,80 @@ describe("Statistics functions test", () => {
             );
 
             expect(currentStatisticsObject.recoveryFactor).toStrictEqual(referenceStatisticsObject.recoveryFactor);
+        });
+    });
+
+    describe("calculateRating test", () => {
+        const profitFactor = currentStatisticsObject.profitFactor,
+            payoffRatio = currentStatisticsObject.payoffRatio,
+            recoveryFactor = currentStatisticsObject.recoveryFactor;
+        describe("Testing calculateRating method with sum of weights close to being equal 1", () => {
+            it("Should not throw error", () => {
+                expect(() => {
+                    sc.calculateRating(profitFactor, payoffRatio, recoveryFactor, 1 / 3, 1 / 2, 1 / 6); // sum equals to 0.(9)
+                }).not.toThrowError();
+            });
+        });
+
+        describe("Testing calculateRating method with undefined prodived", () => {
+            it("Should throw error", () => {
+                expect(() => {
+                    sc.calculateRating(profitFactor, payoffRatio, recoveryFactor, 0.1, undefined, 0.1);
+                }).toThrowError();
+            });
+        });
+
+        describe("Testing calculateRating method with null prodived", () => {
+            it("Should throw error", () => {
+                expect(() => {
+                    sc.calculateRating(profitFactor, payoffRatio, recoveryFactor, 0.1, 0.1, null);
+                }).toThrowError();
+            });
+        });
+
+        describe("Testing calculateRating method with Infinity prodived", () => {
+            it("Should throw error", () => {
+                expect(() => {
+                    sc.calculateRating(profitFactor, payoffRatio, recoveryFactor, Infinity, 0.1, 0.1);
+                }).toThrowError();
+            });
+        });
+
+        describe("Testing calculateRating method with NaN prodived", () => {
+            it("Should throw error", () => {
+                expect(() => {
+                    sc.calculateRating(profitFactor, payoffRatio, recoveryFactor, NaN, 0.1, NaN);
+                }).toThrowError();
+            });
+        });
+
+        describe("Testing calculateRating method with sum of weights not equal to 1", () => {
+            it("Should throw error", () => {
+                expect(() => {
+                    sc.calculateRating(profitFactor, payoffRatio, recoveryFactor, 0.1, 0.1, 0.1);
+                }).toThrowError();
+            });
+        });
+    });
+});
+
+describe("Data validation test", () => {
+    const pos = positions[0],
+        validObject = new RobotStats();
+    const statsCalculator = new StatisticsCalculator(null, [pos]);
+
+    describe("Calling calculateRating before all statistics are calculated", () => {
+        it("Should throw error", () => {
+            expect(() => {
+                statsCalculator.calculateRating(
+                    validObject.profitFactor,
+                    validObject.payoffRatio,
+                    validObject.recoveryFactor,
+                    0.2,
+                    0.3,
+                    0.5
+                );
+            }).toThrowError();
         });
     });
 });

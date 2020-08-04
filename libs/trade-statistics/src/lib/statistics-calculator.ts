@@ -183,7 +183,7 @@ export default class StatisticsCalculator {
                 this.prevStatistics.grossProfit,
                 this.newPosition.profit
             );
-
+        this.currentStatistics.grossProfit = initializeValues(this.currentStatistics.grossProfit);
         return this;
     }
 
@@ -193,7 +193,7 @@ export default class StatisticsCalculator {
                 this.prevStatistics.grossLoss,
                 this.newPosition.profit
             );
-
+        this.currentStatistics.grossLoss = initializeValues(this.currentStatistics.grossLoss);
         return this;
     }
 
@@ -214,7 +214,7 @@ export default class StatisticsCalculator {
                 this.currentStatistics.grossProfit,
                 this.currentStatistics.tradesWinning
             );
-
+        this.currentStatistics.avgProfit = initializeValues(this.currentStatistics.avgProfit);
         return this;
     }
 
@@ -225,7 +225,7 @@ export default class StatisticsCalculator {
                 this.currentStatistics.grossLoss,
                 this.currentStatistics.tradesLosing
             );
-
+        this.currentStatistics.avgLoss = initializeValues(this.currentStatistics.avgLoss);
         return this;
     }
 
@@ -347,7 +347,12 @@ export default class StatisticsCalculator {
         currentTradesRated: RobotNumberValue,
         currentTradesCount: RobotNumberValue
     ): RobotNumberValue {
-        validateArguments(currentTradesRated.all, currentTradesRated[this.dir], currentTradesCount.all, currentTradesCount[this.dir]);
+        validateArguments(
+            currentTradesRated.all,
+            currentTradesRated[this.dir],
+            currentTradesCount.all,
+            currentTradesCount[this.dir]
+        );
 
         let newRate = { ...prevRate };
 
@@ -363,7 +368,13 @@ export default class StatisticsCalculator {
         newTradesCount: RobotNumberValue,
         newBars: number
     ): RobotNumberValue {
-        validateArguments(prevTradesCount.all, prevTradesCount[this.dir], newTradesCount.all, newTradesCount[this.dir], newBars);
+        validateArguments(
+            prevTradesCount.all,
+            prevTradesCount[this.dir],
+            newTradesCount.all,
+            newTradesCount[this.dir],
+            newBars
+        );
 
         let newAvgBars = { ...prevAvgBars };
 
@@ -408,7 +419,7 @@ export default class StatisticsCalculator {
     }
 
     public calculateRatio(profitStat: RobotNumberValue, lossStat: RobotNumberValue): RobotNumberValue {
-        validateArguments(profitStat.all, profitStat[this.dir], lossStat.all,lossStat[this.dir]);
+        validateArguments(profitStat.all, profitStat[this.dir], lossStat.all, lossStat[this.dir]);
 
         return new RobotNumberValue(
             Math.abs(profitStat.all / lossStat.all),
@@ -524,7 +535,7 @@ export default class StatisticsCalculator {
         recoveryFactorWeight: number = 0.25,
         payoffRatioWeight: number = 0.4
     ): RobotNumberValue {
-        validateArguments(profitFactor, payoffRatio, recoveryFactor);
+        validateArguments(profitFactor.all, profitFactor.long, profitFactor.short, payoffRatio.all, payoffRatio.long, payoffRatio.short, recoveryFactor.all);
 
         if (!isFinite(profitFactorWeight) || !isFinite(recoveryFactorWeight) || !isFinite(payoffRatioWeight))
             throw new Error("Arguments must be finite numbers");
@@ -544,10 +555,16 @@ function validateArguments(...args: any[]) {
     let reasonMsg = "Updating methods might have been called in wrong order.";
     for (let arg of args) {
         if (arg == null) {
-            console.log(JSON.stringify(args))
+            console.log(JSON.stringify(args));
             throw new Error(`Validation error: argument ${args.indexOf(arg)} cannot be null. ` + reasonMsg);
         }
     }
+}
+
+function initializeValues(stat: RobotNumberValue): RobotNumberValue {
+    let values = { ...stat };
+    for (let key in values) if (values[key] == null) values[key] = 0;
+    return values;
 }
 
 // ignores integers
